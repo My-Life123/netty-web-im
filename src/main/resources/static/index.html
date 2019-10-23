@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>netty-im-Demo</title>
+    <script src="./jquery-2.1.4.min.js"></script>
+    <script type="text/javascript">
+        var ws;
+        function WebSocketTest() {
+            if("WebSocket" in window){
+                console.info("浏览器支持WebSocket");
+                ws=new WebSocket("ws://www.cnsyear.cn:8090");
+                //打开一个websocket
+                ws.onopen=function (ev) {
+                    console.info(ev);
+                    console.info('WebSocket已连接！')
+                }
+                ws.onmessage=function (ev) {
+                    var receivedMsg=ev.data;
+                    $("#textArea").append('['+dateFormat("YYYY-mm-dd HH:MM", new Date())+']'+receivedMsg+"\r\n");
+                }
+                ws.onclose=function () {
+                    console.info("连接已关闭...");
+                }
+            }else{
+                //浏览器不支持websocket
+                alert("您的浏览器不支持websocket！");
+            }
+        }
+
+        function sendText() {
+           var param={};
+           param.channelId=$("[name='channelId']").val();
+           param.message=$("[name='message']").val();
+            $.ajax({
+               method:'GET',
+               url:'/message/sentText',
+               dataType:'json',
+               data:param,
+               success:function (result) {
+                   if(result.success){
+                       console.info("发送成功!");
+                   }
+               }
+           });
+        }
+        function  getChannelAll() {
+            $.ajax({
+                method:'GET',
+                url:'/message/getChannellAll',
+                dataType:'json',
+                success:function (data) {
+                    var strHtml = '';
+                    if (data.success) {
+                        result =eval('(' + data.data + ')');
+                            for (var i in result) {
+                                strHtml += result[i] + "<br/>"
+                            }
+                            $("#userAll").html(strHtml);
+                        }
+                    }
+                });
+        }
+
+        function dateFormat(fmt, date) {
+            let ret;
+            let opt = {
+                "Y+": date.getFullYear().toString(),        // 年
+                "m+": (date.getMonth() + 1).toString(),     // 月
+                "d+": date.getDate().toString(),            // 日
+                "H+": date.getHours().toString(),           // 时
+                "M+": date.getMinutes().toString(),         // 分
+                "S+": date.getSeconds().toString()          // 秒
+                // 有其他格式化字符需求可以继续添加，必须转化成字符串
+            };
+            for (let k in opt) {
+                ret = new RegExp("(" + k + ")").exec(fmt);
+                if (ret) {
+                    fmt = fmt.replace(ret[1], (ret[1].length == 1) ? (opt[k]) : (opt[k].padStart(ret[1].length, "0")))
+                };
+            };
+            return fmt;
+        }
+    </script>
+</head>
+<body onload="WebSocketTest();">
+消息内容: <input type="text" name="message"/><br/>
+接收者Id: <input type="text" name="channelId"/>&nbsp;<button onclick="sendText();">发送</button>
+&nbsp; <button onclick="getChannelAll();">在线channel</button><br/>
+
+<div id="userAll"></div>
+<hr/>
+<textarea id="textArea" style="margin: 0px; width: 321px; height: 205px;"></textarea>
+</body>
+</html>
